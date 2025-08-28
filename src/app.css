@@ -1,0 +1,24 @@
+
+
+@import '@skeletonlabs/skeleton';
+@import '@skeletonlabs/skeleton/optional/presets';
+@import '@skeletonlabs/skeleton/themes/mona';
+@import '@fontsource/dotgothic16';
+
+@import 'tailwindcss';
+@source "../node_modules/@skeletonlabs/skeleton-svelte/**/*.{svelte,js,ts}";
+
+[data-theme='mona'] {
+  --heading-font-family: 'DotGothic16', sans-serif;
+  --base-font-family: 'DotGothic16', sans-serif;
+  --anchor-font-family: 'inherit';
+	--text-scaling: 0.7;
+}
+
+.chart-container {
+	margin: 1rem 0;
+	border: 1px solid #383838;
+	border-radius: 8px;
+	overflow: hidden;
+	position: relative;
+}

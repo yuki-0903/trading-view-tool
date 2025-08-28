@@ -1,0 +1,122 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: 'Divergence monitoring system with scheduled execution'
+
+Parameters:
+  LineChannelAccessToken:
+    Type: String
+    Description: LINE Messaging API Channel Access Token
+    NoEcho: true
+  
+  LineUserId:
+    Type: String
+    Description: LINE User ID to receive notifications
+    NoEcho: true
+  
+  ScheduleExpression:
+    Type: String
+    Description: Monitoring schedule (cron expression)
+    Default: cron(0,15,30,45 * ? * 1-5 *)  # 平日15分毎
+
+Globals:
+  Function:
+    Timeout: 300
+    MemorySize: 512
+    Runtime: nodejs18.x
+    Environment:
+      Variables:
+        LINE_CHANNEL_ACCESS_TOKEN: !Ref LineChannelAccessToken
+        LINE_USER_ID: !Ref LineUserId
+        TZ: Asia/Tokyo
+
+Resources:
+  # Lambda関数
+  DivergenceMonitorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: divergence-monitor
+      CodeUri: divergence-monitor/
+      Handler: index.handler
+      Description: 'Monitor trading divergences and send LINE notifications'
+      Events:
+        ScheduledExecution:
+          Type: Schedule
+          Properties:
+            Schedule: !Ref ScheduleExpression
+            Description: 'Scheduled divergence monitoring'
+            Enabled: true
+      Environment:
+        Variables:
+          LOG_LEVEL: info
+      DeadLetterQueue:
+        Type: SQS
+        TargetArn: !GetAtt DivergenceMonitorDLQ.Arn
+
+  # Dead Letter Queue
+  DivergenceMonitorDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'divergence-monitor-dlq-${AWS::StackName}'
+      MessageRetentionPeriod: 1209600  # 14日間
+      VisibilityTimeout: 60
+
+  # CloudWatch Logs
+  DivergenceMonitorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${DivergenceMonitorFunction}'
+      RetentionInDays: 30
+
+  # CloudWatch Alarms
+  DivergenceMonitorErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: divergence-monitor-errors
+      AlarmDescription: 'Alert when divergence monitor function errors occur'
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref DivergenceMonitorFunction
+      TreatMissingData: notBreaching
+
+  DivergenceMonitorDurationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: divergence-monitor-duration
+      AlarmDescription: 'Alert when divergence monitor function takes too long'
+      MetricName: Duration
+      Namespace: AWS/Lambda
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 240000  # 4分
+      ComparisonOperator: GreaterThanThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref DivergenceMonitorFunction
+      TreatMissingData: notBreaching
+
+Outputs:
+  DivergenceMonitorFunction:
+    Description: 'Divergence Monitor Lambda Function ARN'
+    Value: !GetAtt DivergenceMonitorFunction.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-DivergenceMonitorFunction'
+
+  DivergenceMonitorLogGroup:
+    Description: 'CloudWatch Log Group for Divergence Monitor'
+    Value: !Ref DivergenceMonitorLogGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-LogGroup'
+
+  ScheduleExpression:
+    Description: 'Monitoring schedule expression'
+    Value: !Ref ScheduleExpression
+    Export:
+      Name: !Sub '${AWS::StackName}-Schedule'

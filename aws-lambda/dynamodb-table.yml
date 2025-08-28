@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'DynamoDB table for Divergence Notification History'
+
+Resources:
+  DivergenceNotificationHistoryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: DivergenceNotificationHistory
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: divergenceId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: divergenceId
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: false
+      Tags:
+        - Key: Name
+          Value: DivergenceNotificationHistory
+        - Key: Purpose
+          Value: Store notification history for divergence detection
+
+Outputs:
+  TableName:
+    Description: Name of the DynamoDB table
+    Value: !Ref DivergenceNotificationHistoryTable
+    Export:
+      Name: DivergenceNotificationHistoryTableName
+      
+  TableArn:
+    Description: ARN of the DynamoDB table
+    Value: !GetAtt DivergenceNotificationHistoryTable.Arn
+    Export:
+      Name: DivergenceNotificationHistoryTableArn

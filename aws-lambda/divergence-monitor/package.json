@@ -1,0 +1,29 @@
+{
+  "name": "divergence-monitor",
+  "version": "1.0.0",
+  "description": "AWS Lambda function for monitoring trading divergences",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "create": "npm run build && aws lambda create-function --function-name divergence-monitor --runtime nodejs18.x --role arn:aws:iam::917449735147:role/lambda-execution-role --handler index.handler --zip-file fileb://deployment.zip --timeout 300 --memory-size 256",
+    "deploy": "npm run build && aws lambda update-function-code --function-name divergence-monitor --zip-file fileb://deployment.zip",
+    "build": "zip -r deployment.zip . -x '*.git*' 'node_modules/.cache/*' 'deployment.zip'",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.0"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "trading",
+    "divergence",
+    "monitoring",
+    "line-notify"
+  ],
+  "author": "Trading Monitor System",
+  "license": "MIT"
+}
