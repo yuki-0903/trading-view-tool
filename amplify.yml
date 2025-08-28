@@ -5,6 +5,9 @@ frontend:
       commands:
         - nvm use 20
         - node --version
+        - echo "Environment variables check:"
+        - echo "PUBLIC_SUPABASE_URL=$PUBLIC_SUPABASE_URL"
+        - echo "PUBLIC_SUPABASE_ANON_KEY length=${#PUBLIC_SUPABASE_ANON_KEY}"
         - rm -rf node_modules package-lock.json
         - npm install --legacy-peer-deps
     build:
