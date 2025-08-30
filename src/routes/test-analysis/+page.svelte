@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { slide } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
 	import { fetchRecentKlineData, fetchRangeKlineData, fetchGmoApi } from '$lib/api/gmoApiService';
 	import type { KLineData } from '$lib/types/gmo';
 	import CandlestickChart from '$lib/components/CandlestickChart.svelte';
@@ -53,7 +55,7 @@
 	let dragOffset = { x: 0, y: 0 };
 	
 	// データ取得パネルの折りたたみ状態
-	let isDataPanelCollapsed = false;
+	let isDataPanelCollapsed = true;
 	
 	// 日付ごとのキャッシュキーを生成
 	function generateDailyCacheKey(symbol: string, interval: string, date: string): string {
@@ -623,7 +625,7 @@
 		<div class="bg-cyber-dark-2/30 border border-white/10 rounded-lg mb-6">
 			<!-- パネルヘッダー -->
 			<div class="flex items-center justify-between p-4 border-b border-white/10">
-				<h3 class="text-lg font-semibold text-primary-400">📊 データ取得設定</h3>
+				<h3 class="text-lg font-semibold text-primary-400">データ取得設定</h3>
 				<button 
 					class="text-primary-400 hover:bg-primary-500/20 p-2 rounded transition-all text-sm"
 					on:click={() => isDataPanelCollapsed = !isDataPanelCollapsed}
@@ -699,7 +701,7 @@
 			
 			<!-- 詳細設定（折りたたみ可能） -->
 			{#if !isDataPanelCollapsed}
-			<div class="p-6">
+			<div class="details-panel p-6" transition:slide={{ duration: 300, easing: cubicOut }}>
 
 			<div class="settings-row">
 				<div class="quick-period-controls">
@@ -718,7 +720,7 @@
 
 			<div class="settings-row」">
 				<div class="divergence-settings">
-					<label>ダイバージェンス設定:</label>
+					<p>ダイバージェンス設定:</p>
 					<div class="divergence-controls flex">
 						<div class="control-item mr-4">
 							<label for="lookback" class="text-sm">ピーク検出範囲:</label>
@@ -853,7 +855,7 @@
 						</button>
 					</div>
 					{#if !isMinimized}
-						<div class="p-4 max-h-[calc(80vh-3rem)] overflow-y-auto">
+						<div class="p-4 max-h-[calc(80vh-3rem)] overflow-y-auto" transition:slide={{ duration: 300, easing: cubicOut }}>
 							<TestAnalysisPanel 
 								data={klineData}
 								divergences={allDivergences}
